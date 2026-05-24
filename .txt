@@ -1,0 +1,9 @@
+# Dependencias de Node
+node_modules/
+npm-debug.log*
+
+# Archivos de entorno y configuración local
+.env
+__pycache__/
+*.pyc
+.vscode/

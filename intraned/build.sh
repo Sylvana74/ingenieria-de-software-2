@@ -28,3 +28,7 @@ g++ -std=c++17 -O3 -I./server/include \
     -o intraned
 
 echo "=== ¡Proceso de construcción finalizado con éxito! ==="
+echo "=========================================================================="
+echo " 🔥 ¡POR FIN LO HICE! SE LOGRÓ EL OBJETIVO 😊 🔥 "
+echo " 🚀 Librerías dinámicas binarias ejecutadas en SO Windows con éxito 🚀 "
+echo "=========================================================================="
