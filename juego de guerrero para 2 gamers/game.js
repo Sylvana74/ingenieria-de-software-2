@@ -1,6 +1,6 @@
 "use strict";
 // ============================================
-// SISTEMA DE AUDIO Y VOZ SINTETIZADA
+// SISTEMA DE AUDIO Y MÚSICA DE VICTORIA
 // ============================================
 class SistemaAudio {
     ctxAudio = null;
@@ -93,6 +93,25 @@ class SistemaAudio {
         osc.start();
         osc.stop(this.ctxAudio.currentTime + 0.2);
     }
+    reproducirMusicaGanador() {
+        this.inicializar();
+        if (!this.ctxAudio)
+            return;
+        // Melodía triunfal de victoria
+        const notas = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+        notas.forEach((freq, index) => {
+            const osc = this.ctxAudio.createOscillator();
+            const gain = this.ctxAudio.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, this.ctxAudio.currentTime + (index * 0.2));
+            gain.gain.setValueAtTime(0.2, this.ctxAudio.currentTime + (index * 0.2));
+            gain.gain.linearRampToValueAtTime(0.01, this.ctxAudio.currentTime + (index * 0.2) + 0.4);
+            osc.connect(gain);
+            gain.connect(this.ctxAudio.destination);
+            osc.start(this.ctxAudio.currentTime + (index * 0.2));
+            osc.stop(this.ctxAudio.currentTime + (index * 0.2) + 0.4);
+        });
+    }
     decirDerrota() {
         if ('speechSynthesis' in window) {
             const utterance = new SpeechSynthesisUtterance("¡Tú has muerto!");
@@ -144,6 +163,52 @@ class Habilidad {
         this.poder = poder;
     }
     usar() { registrarLog(`Se utiliza ${this.nombre}: ${this.poder} puntos de poder`); }
+}
+// ============================================
+// FUEGOS ARTIFICIALES (VICTORIA)
+// ============================================
+class FuegoArtificial {
+    x;
+    y;
+    color;
+    particulas = [];
+    constructor(maxX, maxY) {
+        this.x = Math.random() * (maxX - 100) + 50;
+        this.y = Math.random() * (maxY / 2) + 50;
+        const colores = ["#ff0055", "#00ffcc", "#ffb703", "#7209b7", "#4cc9f0"];
+        this.color = colores[Math.floor(Math.random() * colores.length)];
+        for (let i = 0; i < 30; i++) {
+            const ang = Math.random() * Math.PI * 2;
+            const vel = Math.random() * 4 + 2;
+            this.particulas.push({
+                x: this.x,
+                y: this.y,
+                dx: Math.cos(ang) * vel,
+                dy: Math.sin(ang) * vel,
+                vida: 1.0
+            });
+        }
+    }
+    actualizar() {
+        for (let p of this.particulas) {
+            p.x += p.dx;
+            p.y += p.dy;
+            p.vida -= 0.02;
+        }
+    }
+    dibujar(ctx) {
+        ctx.save();
+        for (let p of this.particulas) {
+            if (p.vida > 0) {
+                ctx.globalAlpha = p.vida;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        ctx.restore();
+    }
 }
 // ============================================
 // CLASE MURCIÉLAGO
@@ -218,7 +283,7 @@ class Espina {
     }
 }
 // ============================================
-// PROYECTIL Y BOLA DE ESPINAS ESPECIAL
+// PROYECTIL
 // ============================================
 class Proyectil {
     x;
@@ -315,12 +380,11 @@ class Personaje {
     direccionX = 1;
     tieneEscudo = false;
     murcielagos = [];
-    // Cooldowns (milisegundos)
     ultimoAtaque = 0;
     ultimaCuracion = 0;
     ultimoEscudo = 0;
-    tiempoRecargaAtaque = 1200; // 1.2s
-    tiempoRecargaHabilidad = 4000; // 4.0s
+    tiempoRecargaAtaque = 1200;
+    tiempoRecargaHabilidad = 4000;
     golpesAcertados = 0;
     habilidadEspecialLista = false;
     constructor(id, nombre, arma, habilidadCuracion, habilidadEscudo, posXInicial, posYInicial, colorCuerpo) {
@@ -338,11 +402,9 @@ class Personaje {
     verificarImpacto(px, py) {
         if (!this.viva)
             return { golpeado: false, esCritico: false };
-        // Hitbox Cabeza (Crítico)
         const distanciaCabeza = Math.hypot(px - this.x, py - (this.y - 25));
         if (distanciaCabeza <= 11)
             return { golpeado: true, esCritico: true };
-        // Hitbox Cuerpo
         if (px >= this.x - 10 && px <= this.x + 10 && py >= this.y - 15 && py <= this.y + 11) {
             return { golpeado: true, esCritico: false };
         }
@@ -350,12 +412,12 @@ class Personaje {
     }
     recibirDanio(danio, esCritico = false) {
         if (!this.viva)
-            return;
+            return false;
         if (this.tieneEscudo) {
             this.tieneEscudo = false;
             sfx.reproducirEscudo();
             registrarLog(`P${this.id} (${this.nombre}): El escudo absorbió el daño`);
-            return;
+            return false;
         }
         const danioFinal = esCritico ? danio * 1.5 : danio;
         this.vida -= Math.round(danioFinal);
@@ -387,7 +449,11 @@ class Personaje {
                     registrarLog(`P${this.id} (${this.nombre}) ha reaparecido.`);
                 }, 2500);
             }
+            else {
+                return true; // ¡Se quedó sin vidas! Fin de la partida
+            }
         }
+        return false;
     }
     disparar(proyectiles) {
         if (!this.viva)
@@ -502,7 +568,6 @@ class Personaje {
         ctx.strokeStyle = "#ffffff";
         ctx.lineWidth = 1;
         ctx.strokeRect(this.x - 10, this.y - 15, 20, 26);
-        // Cabeza
         ctx.fillStyle = "#ffb703";
         ctx.beginPath();
         ctx.arc(this.x, this.y - 25, 11, 0, Math.PI * 2);
@@ -532,12 +597,16 @@ const escudo = new Habilidad("Escudo de Iones", 1);
 const jugador1 = new Personaje(1, "Cyber", espadaBase, curacion, escudo, 120, 200, "#00ffff");
 const jugador2 = new Personaje(2, "Neon", espadaBase, curacion, escudo, 480, 200, "#ff33cc");
 const proyectiles = [];
-const estadoTeclas = {};
-// Control estricto de eventos para evitar que se queden trabadas las teclas
+const fuegosArtificiales = [];
+let juegoTerminado = false;
+let ganadorTexto = "";
+const teclasPresionadas = {};
+// Control estricto de teclado para evitar teclas trabadas (Keyup / Keydown exactos)
 window.addEventListener("keydown", (e) => {
+    if (juegoTerminado)
+        return;
     if (e.repeat)
-        return; // Evita disparos automáticos al mantener presionada la barra espaciadora o enter
-    // Jugador 1 Teclas
+        return;
     if (e.code === "Space") {
         e.preventDefault();
         jugador1.disparar(proyectiles);
@@ -548,7 +617,6 @@ window.addEventListener("keydown", (e) => {
         jugador1.curarse();
     if (e.key === "e" || e.key === "E")
         jugador1.activarEscudo();
-    // Jugador 2 Teclas
     if (e.key === "Enter") {
         e.preventDefault();
         jugador2.disparar(proyectiles);
@@ -559,19 +627,20 @@ window.addEventListener("keydown", (e) => {
         jugador2.curarse();
     if (e.key === "p" || e.key === "P")
         jugador2.activarEscudo();
-    estadoTeclas[e.key] = true;
-    estadoTeclas[e.code] = true;
+    teclasPresionadas[e.key] = true;
+    teclasPresionadas[e.code] = true;
 });
 window.addEventListener("keyup", (e) => {
-    estadoTeclas[e.key] = false;
-    estadoTeclas[e.code] = false;
+    teclasPresionadas[e.key] = false;
+    teclasPresionadas[e.code] = false;
 });
-// Limpiar estado si la ventana pierde el foco
 window.addEventListener("blur", () => {
-    for (let k in estadoTeclas)
-        estadoTeclas[k] = false;
+    for (let k in teclasPresionadas)
+        teclasPresionadas[k] = false;
 });
 window.accionP1 = (tipo) => {
+    if (juegoTerminado)
+        return;
     if (tipo === 'atacar')
         jugador1.disparar(proyectiles);
     if (tipo === 'especial')
@@ -582,6 +651,8 @@ window.accionP1 = (tipo) => {
         jugador1.activarEscudo();
 };
 window.accionP2 = (tipo) => {
+    if (juegoTerminado)
+        return;
     if (tipo === 'atacar')
         jugador2.disparar(proyectiles);
     if (tipo === 'especial')
@@ -595,11 +666,13 @@ function configurarBotonLateral(id, teclaSimulada) {
     const btn = document.getElementById(id);
     if (!btn)
         return;
-    btn.addEventListener("mousedown", () => { estadoTeclas[teclaSimulada] = true; });
-    btn.addEventListener("mouseup", () => { estadoTeclas[teclaSimulada] = false; });
-    btn.addEventListener("mouseleave", () => { estadoTeclas[teclaSimulada] = false; });
-    btn.addEventListener("touchstart", (e) => { e.preventDefault(); estadoTeclas[teclaSimulada] = true; });
-    btn.addEventListener("touchend", (e) => { e.preventDefault(); estadoTeclas[teclaSimulada] = false; });
+    btn.addEventListener("mousedown", () => { if (!juegoTerminado)
+        teclasPresionadas[teclaSimulada] = true; });
+    btn.addEventListener("mouseup", () => { teclasPresionadas[teclaSimulada] = false; });
+    btn.addEventListener("mouseleave", () => { teclasPresionadas[teclaSimulada] = false; });
+    btn.addEventListener("touchstart", (e) => { e.preventDefault(); if (!juegoTerminado)
+        teclasPresionadas[teclaSimulada] = true; });
+    btn.addEventListener("touchend", (e) => { e.preventDefault(); teclasPresionadas[teclaSimulada] = false; });
 }
 configurarBotonLateral("p1Arriba", "w");
 configurarBotonLateral("p1Abajo", "s");
@@ -609,7 +682,6 @@ configurarBotonLateral("p2Arriba", "ArrowUp");
 configurarBotonLateral("p2Abajo", "ArrowDown");
 configurarBotonLateral("p2Izq", "ArrowLeft");
 configurarBotonLateral("p2Der", "ArrowRight");
-// Actualización visual de los botones de la interfaz HTML en tiempo real
 function actualizarBotonesUI() {
     const ahora = Date.now();
     // JUGADOR 1
@@ -697,87 +769,125 @@ function gameLoop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = "#080708";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    // Movimiento P1 (WASD)
-    let dirX1 = 0, dirY1 = 0;
-    if (estadoTeclas["a"] || estadoTeclas["A"] || estadoTeclas["ArrowLeft"] && false)
-        dirX1 = -1; // Seguro antisubversión
-    if (estadoTeclas["a"] || estadoTeclas["A"])
-        dirX1 = -1;
-    if (estadoTeclas["d"] || estadoTeclas["D"])
-        dirX1 = 1;
-    if (estadoTeclas["w"] || estadoTeclas["W"])
-        dirY1 = -1;
-    if (estadoTeclas["s"] || estadoTeclas["S"])
-        dirY1 = 1;
-    jugador1.mover(dirX1, dirY1, canvas.width, canvas.height);
-    // Movimiento P2 (Flechas)
-    let dirX2 = 0, dirY2 = 0;
-    if (estadoTeclas["ArrowLeft"])
-        dirX2 = -1;
-    if (estadoTeclas["ArrowRight"])
-        dirX2 = 1;
-    if (estadoTeclas["ArrowUp"])
-        dirY2 = -1;
-    if (estadoTeclas["ArrowDown"])
-        dirY2 = 1;
-    jugador2.mover(dirX2, dirY2, canvas.width, canvas.height);
-    // Actualizar botones de interfaz
-    actualizarBotonesUI();
-    for (let i = proyectiles.length - 1; i >= 0; i--) {
-        const p = proyectiles[i];
-        p.actualizar(canvas.width, canvas.height);
-        p.dibujar(ctx);
-        if (p.activo) {
-            if (p.duenioId === 1) {
-                // Verificar impacto de las espinas de la habilidad especial con la hitbox (cabeza o cuerpo) de P2
-                for (let espina of p.espinasActivas) {
-                    if (espina.activo) {
-                        const impactoEspina = jugador2.verificarImpacto(espina.x, espina.y);
-                        if (impactoEspina.golpeado) {
-                            jugador2.recibirDanio(10, impactoEspina.esCritico);
-                            espina.activo = false;
+    if (!juegoTerminado) {
+        // Movimiento P1 limpio
+        let dirX1 = 0, dirY1 = 0;
+        if (teclasPresionadas["a"] || teclasPresionadas["A"])
+            dirX1 = -1;
+        if (teclasPresionadas["d"] || teclasPresionadas["D"])
+            dirX1 = 1;
+        if (teclasPresionadas["w"] || teclasPresionadas["W"])
+            dirY1 = -1;
+        if (teclasPresionadas["s"] || teclasPresionadas["S"])
+            dirY1 = 1;
+        jugador1.mover(dirX1, dirY1, canvas.width, canvas.height);
+        // Movimiento P2 limpio
+        let dirX2 = 0, dirY2 = 0;
+        if (teclasPresionadas["ArrowLeft"])
+            dirX2 = -1;
+        if (teclasPresionadas["ArrowRight"])
+            dirX2 = 1;
+        if (teclasPresionadas["ArrowUp"])
+            dirY2 = -1;
+        if (teclasPresionadas["ArrowDown"])
+            dirY2 = 1;
+        jugador2.mover(dirX2, dirY2, canvas.width, canvas.height);
+        actualizarBotonesUI();
+        for (let i = proyectiles.length - 1; i >= 0; i--) {
+            const p = proyectiles[i];
+            p.actualizar(canvas.width, canvas.height);
+            p.dibujar(ctx);
+            if (p.activo) {
+                if (p.duenioId === 1) {
+                    for (let espina of p.espinasActivas) {
+                        if (espina.activo) {
+                            const impactoEspina = jugador2.verificarImpacto(espina.x, espina.y);
+                            if (impactoEspina.golpeado) {
+                                const murio = jugador2.recibirDanio(10, impactoEspina.esCritico);
+                                espina.activo = false;
+                                if (murio) {
+                                    juegoTerminado = true;
+                                    ganadorTexto = "¡El Jugador 1 ha ganado la batalla!";
+                                    sfx.reproducirMusicaGanador();
+                                }
+                            }
+                        }
+                    }
+                    const impacto = jugador2.verificarImpacto(p.x, p.y);
+                    if (impacto.golpeado && !p.esEspecial) {
+                        const murio = jugador2.recibirDanio(jugador1.arma.danio, impacto.esCritico);
+                        p.activo = false;
+                        jugador1.registrarAciertoGolpe();
+                        if (murio) {
+                            juegoTerminado = true;
+                            ganadorTexto = "¡El Jugador 1 ha ganado la batalla!";
+                            sfx.reproducirMusicaGanador();
                         }
                     }
                 }
-                // Verificar proyectil normal de P1
-                const impacto = jugador2.verificarImpacto(p.x, p.y);
-                if (impacto.golpeado && !p.esEspecial) {
-                    jugador2.recibirDanio(jugador1.arma.danio, impacto.esCritico);
-                    p.activo = false;
-                    jugador1.registrarAciertoGolpe();
-                }
-            }
-            if (p.duenioId === 2) {
-                // Verificar impacto de las espinas de la habilidad especial con la hitbox de P1
-                for (let espina of p.espinasActivas) {
-                    if (espina.activo) {
-                        const impactoEspina = jugador1.verificarImpacto(espina.x, espina.y);
-                        if (impactoEspina.golpeado) {
-                            jugador1.recibirDanio(10, impactoEspina.esCritico);
-                            espina.activo = false;
+                if (p.duenioId === 2) {
+                    for (let espina of p.espinasActivas) {
+                        if (espina.activo) {
+                            const impactoEspina = jugador1.verificarImpacto(espina.x, espina.y);
+                            if (impactoEspina.golpeado) {
+                                const murio = jugador1.recibirDanio(10, impactoEspina.esCritico);
+                                espina.activo = false;
+                                if (murio) {
+                                    juegoTerminado = true;
+                                    ganadorTexto = "¡El Jugador 2 ha ganado la batalla!";
+                                    sfx.reproducirMusicaGanador();
+                                }
+                            }
+                        }
+                    }
+                    const impacto = jugador1.verificarImpacto(p.x, p.y);
+                    if (impacto.golpeado && !p.esEspecial) {
+                        const murio = jugador1.recibirDanio(jugador2.arma.danio, impacto.esCritico);
+                        p.activo = false;
+                        jugador2.registrarAciertoGolpe();
+                        if (murio) {
+                            juegoTerminado = true;
+                            ganadorTexto = "¡El Jugador 2 ha ganado la batalla!";
+                            sfx.reproducirMusicaGanador();
                         }
                     }
                 }
-                // Verificar proyectil normal de P2
-                const impacto = jugador1.verificarImpacto(p.x, p.y);
-                if (impacto.golpeado && !p.esEspecial) {
-                    jugador1.recibirDanio(jugador2.arma.danio, impacto.esCritico);
-                    p.activo = false;
-                    jugador2.registrarAciertoGolpe();
-                }
             }
+            if (!p.activo)
+                proyectiles.splice(i, 1);
         }
-        if (!p.activo)
-            proyectiles.splice(i, 1);
     }
     jugador1.dibujar(ctx);
     jugador2.dibujar(ctx);
-    // Textos de Vidas en pantalla
+    // Vidas en pantalla
     ctx.fillStyle = "#00ffff";
     ctx.font = "bold 13px sans-serif";
     ctx.fillText(`Vidas P1: ${"❤️".repeat(jugador1.vidasRestantes)}`, 20, 25);
     ctx.fillStyle = "#ff33cc";
     ctx.fillText(`Vidas P2: ${"❤️".repeat(jugador2.vidasRestantes)}`, canvas.width - 150, 25);
+    // Pantalla de Victoria y Fuegos Artificiales
+    if (juegoTerminado) {
+        if (Math.random() < 0.1) {
+            fuegosArtificiales.push(new FuegoArtificial(canvas.width, canvas.height));
+        }
+        for (let i = fuegosArtificiales.length - 1; i >= 0; i--) {
+            fuegosArtificiales[i].actualizar();
+            fuegosArtificiales[i].dibujar(ctx);
+        }
+        ctx.save();
+        ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#ffb703";
+        ctx.font = "bold 24px sans-serif";
+        ctx.textAlign = "center";
+        ctx.shadowColor = "#ff0055";
+        ctx.shadowBlur = 20;
+        ctx.fillText(ganadorTexto, canvas.width / 2, canvas.height / 2 - 20);
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "14px sans-serif";
+        ctx.fillText("¡Victoria Épica!", canvas.width / 2, canvas.height / 2 + 25);
+        ctx.restore();
+    }
     requestAnimationFrame(gameLoop);
 }
 gameLoop();
