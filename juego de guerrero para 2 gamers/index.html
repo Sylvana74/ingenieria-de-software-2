@@ -2,25 +2,32 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Juego 2P - Cátedra Ingeniería de Software 2</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juego 2P - Responsive</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎮</text></svg>">
     <style>
         body { 
             background: #0b090a; 
             color: #fff; 
             font-family: sans-serif; 
             display: flex; 
+            flex-direction: column;
             justify-content: center; 
             align-items: center; 
-            height: 100vh; 
+            min-height: 100vh; 
             margin: 0;
+            padding: 10px;
+            box-sizing: border-box;
             overflow-x: hidden;
         }
         .contenedor-principal {
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 15px;
-            /* Margen derecho para dar espacio a la consola de logs sin superponerse */
-            margin-right: 290px; 
+            flex-wrap: wrap;
+            width: 100%;
+            max-width: 1000px;
         }
         .panel-lateral {
             display: flex;
@@ -32,12 +39,16 @@
             border: 1px solid #333;
             width: 145px;
             text-align: center;
+            box-sizing: border-box;
         }
         h3 { font-size: 0.85rem; margin: 0 0 4px 0; color: #00ffcc; }
         canvas { 
+            max-width: 100%;
+            height: auto;
             border: 2px solid #00ffcc; 
             box-shadow: 0 0 20px rgba(0,255,204,0.3); 
             background: #080708;
+            touch-action: none;
         }
         button { 
             background: #212529; 
@@ -49,6 +60,7 @@
             font-size: 0.72rem;
             font-weight: bold;
             transition: all 0.2s;
+            touch-action: manipulation;
         }
         button:hover:not(:disabled) { background: #00ffcc; color: #0b090a; border-color: #00ffcc; }
         button:disabled { background: #111; color: #555; border-color: #333; cursor: not-allowed; }
@@ -57,14 +69,13 @@
         .btn-especial { background: #330022; border-color: #ff0055; color: #ff0055; }
         .btn-especial:hover:not(:disabled) { background: #ff0055; color: #fff; }
 
-        /* Consola de Logs Flotante acomodada a la derecha sin estorbar */
+        /* Consola de Logs Flotante */
         #logPanel {
             position: fixed; 
             right: 15px; 
             top: 15px; 
             width: 270px; 
-            height: calc(100vh - 30px);
-            max-height: 450px;
+            max-height: 400px;
             background: rgba(22, 26, 29, 0.96); 
             border: 1px solid #00ffcc; 
             border-radius: 8px;
@@ -79,6 +90,27 @@
         #logContent { flex: 1; overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 4px; }
         .log-item { border-bottom: 1px dashed #333; padding-bottom: 3px; color: #00ffcc; }
         .btn-log { position: fixed; bottom: 15px; right: 15px; background: #00ffcc; color: #0b090a; border: none; padding: 8px 12px; border-radius: 5px; font-weight: bold; cursor: pointer; z-index: 101; font-size: 11px; }
+
+        /* Media Query para pantallas pequeñas (Celulares) */
+        @media (max-width: 900px) {
+            .contenedor-principal {
+                flex-direction: column;
+                gap: 10px;
+            }
+            .panel-lateral {
+                width: 100%;
+                max-width: 560px;
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: space-around;
+                align-items: center;
+            }
+            .panel-lateral h3 { width: 100%; margin-bottom: 2px; }
+            .panel-lateral hr { display: none; }
+            .panel-lateral button { flex: 1 1 20%; min-width: 70px; }
+            canvas { width: 100%; height: auto; }
+            #logPanel { width: 90%; right: 5%; top: 10px; }
+        }
     </style>
 </head>
 <body>
@@ -98,7 +130,7 @@
             <hr style="border-color: #333; width:100%;">
             <button class="btn-p1" id="btnP1Atacar" onclick="accionP1('atacar')">⚔️ Atacar</button>
             <button class="btn-especial" id="btnP1Especial" onclick="accionP1('especial')" disabled>✨ Especial (F)</button>
-            <button class="btn-p1" id="btnP1Curar" onclick="accionP1('curar')">🧪 Curación</button>
+            <button class="btn-p1" id="btnP1Curar" onclick="accionP1('curar')">🧪 Curar</button>
             <button class="btn-p1" id="btnP1Escudo" onclick="accionP1('escudo')">🛡️ Escudo</button>
         </div>
 
@@ -117,7 +149,7 @@
             <hr style="border-color: #333; width:100%;">
             <button class="btn-p2" id="btnP2Atacar" onclick="accionP2('atacar')">⚔️ Atacar</button>
             <button class="btn-especial" id="btnP2Especial" onclick="accionP2('especial')" disabled>✨ Especial (L)</button>
-            <button class="btn-p2" id="btnP2Curar" onclick="accionP2('curar')">🧪 Curación</button>
+            <button class="btn-p2" id="btnP2Curar" onclick="accionP2('curar')">🧪 Curar</button>
             <button class="btn-p2" id="btnP2Escudo" onclick="accionP2('escudo')">🛡️ Escudo</button>
         </div>
     </div>
