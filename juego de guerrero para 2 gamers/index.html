@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Juego 2P - Cátedra Ingeniería de Software 2</title>
+    <style>
+        body { 
+            background: #0b090a; 
+            color: #fff; 
+            font-family: sans-serif; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+        }
+        .contenedor-juego {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .panel-lateral {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            background: #161a1d;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #333;
+            width: 140px;
+            text-align: center;
+        }
+        h3 { font-size: 0.9rem; margin: 0 0 5px 0; color: #00ffcc; }
+        canvas { 
+            border: 2px solid #00ffcc; 
+            box-shadow: 0 0 20px rgba(0,255,204,0.3); 
+            background: #080708;
+        }
+        button { 
+            background: #212529; 
+            color: #fff; 
+            border: 1px solid #555; 
+            padding: 8px; 
+            cursor: pointer; 
+            border-radius: 5px; 
+            font-size: 0.8rem;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        button:hover { background: #00ffcc; color: #0b090a; border-color: #00ffcc; }
+        .btn-p1 { border-color: #00ffff; color: #00ffff; }
+        .btn-p2 { border-color: #ff33cc; color: #ff33cc; }
+    </style>
+</head>
+<body>
+
+    <div class="contenedor-juego">
+        <!-- Panel Izquierda: Jugador 1 -->
+        <div class="panel-lateral">
+            <h3 style="color: #00ffff;">Jugador 1</h3>
+            <button class="btn-p1" id="p1Arriba">⬆️ Arriba</button>
+            <div style="display: flex; gap: 5px;">
+                <button class="btn-p1" id="p1Izq" style="flex:1;">⬅️</button>
+                <button class="btn-p1" id="p1Der" style="flex:1;">➡️</button>
+            </div>
+            <button class="btn-p1" id="p1Abajo">⬇️ Abajo</button>
+            <hr style="border-color: #333; width:100%;">
+            <button class="btn-p1" onclick="accionP1('atacar')">⚔️ Atacar</button>
+            <button class="btn-p1" onclick="accionP1('curar')">✨ Curación</button>
+            <button class="btn-p1" onclick="accionP1('escudo')">🛡️ Escudo</button>
+        </div>
+
+        <!-- Canvas Central -->
+        <canvas id="gameCanvas" width="600" height="400"></canvas>
+
+        <!-- Panel Derecha: Jugador 2 -->
+        <div class="panel-lateral">
+            <h3 style="color: #ff33cc;">Jugador 2</h3>
+            <button class="btn-p2" id="p2Arriba">⬆️ Arriba</button>
+            <div style="display: flex; gap: 5px;">
+                <button class="btn-p2" id="p2Izq" style="flex:1;">⬅️</button>
+                <button class="btn-p2" id="p2Der" style="flex:1;">➡️</button>
+            </div>
+            <button class="btn-p2" id="p2Abajo">⬇️ Abajo</button>
+            <hr style="border-color: #333; width:100%;">
+            <button class="btn-p2" onclick="accionP2('atacar')">⚔️ Atacar</button>
+            <button class="btn-p2" onclick="accionP2('curar')">✨ Curación</button>
+            <button class="btn-p2" onclick="accionP2('escudo')">🛡️ Escudo</button>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
