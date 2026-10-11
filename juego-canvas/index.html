@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Juego - Cátedra Ingeniería de Software 2</title>
+    <title>Juego 1P - Controles y Logs</title>
     <style>
         body { 
             background: #0b090a; 
@@ -15,26 +15,26 @@
             margin: 0; 
             padding: 20px;
         }
-        h1 { font-size: 1.5rem; margin-bottom: 10px; color: #00ffcc; text-shadow: 0 0 10px rgba(0,255,204,0.5); }
+        h1 { font-size: 1.3rem; margin-bottom: 8px; color: #00ffcc; text-shadow: 0 0 10px rgba(0,255,204,0.5); }
         canvas { 
             border: 2px solid #00ffcc; 
             box-shadow: 0 0 20px rgba(0,255,204,0.3); 
             background: #0b090a;
         }
         .panel-control {
-            margin-top: 15px;
+            margin-top: 10px;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
             align-items: center;
             background: #161a1d;
-            padding: 15px;
+            padding: 12px;
             border-radius: 10px;
             border: 1px solid #333;
         }
         .grupo-botones {
             display: flex;
-            gap: 8px;
+            gap: 6px;
             flex-wrap: wrap;
             justify-content: center;
         }
@@ -42,10 +42,11 @@
             background: #212529; 
             color: #00ffcc; 
             border: 1px solid #00ffcc; 
-            padding: 8px 14px; 
+            padding: 6px 12px; 
             cursor: pointer; 
             border-radius: 5px; 
             font-weight: bold;
+            font-size: 0.8rem;
             transition: all 0.2s;
         }
         button:hover { 
@@ -55,14 +56,27 @@
         }
         .btn-accion { color: #ff00ff; border-color: #ff00ff; }
         .btn-accion:hover { background: #ff00ff; color: #0b090a; box-shadow: 0 0 10px #ff00ff; }
+        .btn-log-toggle { background: #333; color: #fff; border: 1px solid #fff; margin-top: 8px; }
+
+        /* Estilo para la consola de Logs flotante */
+        #logPanel {
+            position: fixed; right: 20px; top: 20px; width: 320px; height: 350px;
+            background: rgba(22, 26, 29, 0.95); border: 1px solid #00ffcc; border-radius: 8px;
+            display: flex; flex-direction: column; box-shadow: 0 0 15px rgba(0,255,204,0.2);
+            font-family: monospace; font-size: 11px; z-index: 100;
+        }
+        .log-header { background: #00ffcc; color: #0b090a; padding: 5px 10px; font-weight: bold; display: flex; justify-content: space-between; }
+        #logContent { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 4px; }
+        .log-item { border-bottom: 1px dashed #333; padding-bottom: 3px; color: #00ffcc; }
     </style>
 </head>
 <body>
 
-    <h1>Visualizador de Personaje (TypeScript + Canvas)</h1>
+    <h1>Visualizador de Personaje (1P)</h1>
     
-    <canvas id="gameCanvas" width="600" height="350"></canvas>
+    <canvas id="gameCanvas" width="600" height="320"></canvas>
 
+    <!-- Botonera completa de control del juego -->
     <div class="panel-control">
         <div><strong>Movimiento:</strong></div>
         <div class="grupo-botones">
@@ -80,9 +94,19 @@
             <button onclick="cambiarHabEscudo()">🛡️ Barrera</button>
             <button class="btn-accion" onclick="dispararLuz()">💥 Disparar Luz</button>
         </div>
+
+        <button class="btn-log-toggle" onclick="toggleLog()">📜 Mostrar/Ocultar Consola [LOG]</button>
     </div>
 
-    <!-- Cargamos el archivo JavaScript compilado -->
+    <!-- Panel de Logs estilo terminal -->
+    <div id="logPanel">
+        <div class="log-header">
+            <span>Consola de Registros [LOG]</span>
+            <span style="cursor:pointer;" onclick="toggleLog()">[X]</span>
+        </div>
+        <div id="logContent"></div>
+    </div>
+
     <script src="game.js"></script>
 </body>
 </html>

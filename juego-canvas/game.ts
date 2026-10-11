@@ -1,7 +1,7 @@
 // ============================================
-// SISTEMA DE AUDIO NATIVO (Efectos de ruido / Sonidos)
+// SISTEMA DE AUDIO Y VOZ SINTETIZADA
 // ============================================
-class GeneradorSonido {
+class SistemaAudio {
     private ctxAudio: AudioContext | null = null;
 
     private inicializar() {
@@ -9,9 +9,7 @@ class GeneradorSonido {
             const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
             this.ctxAudio = new AudioCtx();
         }
-        if (this.ctxAudio.state === 'suspended') {
-            this.ctxAudio.resume();
-        }
+        if (this.ctxAudio.state === 'suspended') this.ctxAudio.resume();
     }
 
     reproducirLaser() {
@@ -24,10 +22,8 @@ class GeneradorSonido {
         osc.frequency.exponentialRampToValueAtTime(100, this.ctxAudio.currentTime + 0.15);
         gain.gain.setValueAtTime(0.15, this.ctxAudio.currentTime);
         gain.gain.linearRampToValueAtTime(0.01, this.ctxAudio.currentTime + 0.15);
-        osc.connect(gain);
-        gain.connect(this.ctxAudio.destination);
-        osc.start();
-        osc.stop(this.ctxAudio.currentTime + 0.15);
+        osc.connect(gain); gain.connect(this.ctxAudio.destination);
+        osc.start(); osc.stop(this.ctxAudio.currentTime + 0.15);
     }
 
     reproducirArco() {
@@ -40,26 +36,23 @@ class GeneradorSonido {
         osc.frequency.exponentialRampToValueAtTime(800, this.ctxAudio.currentTime + 0.2);
         gain.gain.setValueAtTime(0.1, this.ctxAudio.currentTime);
         gain.gain.linearRampToValueAtTime(0.01, this.ctxAudio.currentTime + 0.2);
-        osc.connect(gain);
-        gain.connect(this.ctxAudio.destination);
-        osc.start();
-        osc.stop(this.ctxAudio.currentTime + 0.2);
+        osc.connect(gain); gain.connect(this.ctxAudio.destination);
+        osc.start(); osc.stop(this.ctxAudio.currentTime + 0.2);
     }
 
     reproducirSanacion() {
         this.inicializar();
         if (!this.ctxAudio) return;
-        [440, 554.37, 659.25].forEach((freq, i) => {
+        [440, 554, 659].forEach((freq, i) => {
             const osc = this.ctxAudio!.createOscillator();
             const gain = this.ctxAudio!.createGain();
             osc.type = 'triangle';
             osc.frequency.setValueAtTime(freq, this.ctxAudio!.currentTime + (i * 0.08));
-            gain.gain.setValueAtTime(0.08, this.ctxAudio!.currentTime + (i * 0.08));
-            gain.gain.linearRampToValueAtTime(0.01, this.ctxAudio!.currentTime + (i * 0.08) + 0.25);
-            osc.connect(gain);
-            gain.connect(this.ctxAudio!.destination);
+            gain.gain.setValueAtTime(0.1, this.ctxAudio!.currentTime + (i * 0.08));
+            gain.gain.linearRampToValueAtTime(0.01, this.ctxAudio!.currentTime + (i * 0.08) + 0.2);
+            osc.connect(gain); gain.connect(this.ctxAudio!.destination);
             osc.start(this.ctxAudio!.currentTime + (i * 0.08));
-            osc.stop(this.ctxAudio!.currentTime + (i * 0.08) + 0.25);
+            osc.stop(this.ctxAudio!.currentTime + (i * 0.08) + 0.2);
         });
     }
 
@@ -69,57 +62,85 @@ class GeneradorSonido {
         const osc = this.ctxAudio.createOscillator();
         const gain = this.ctxAudio.createGain();
         osc.type = 'square';
-        osc.frequency.setValueAtTime(150, this.ctxAudio.currentTime);
-        osc.frequency.linearRampToValueAtTime(80, this.ctxAudio.currentTime + 0.3);
-        gain.gain.setValueAtTime(0.12, this.ctxAudio.currentTime);
+        osc.frequency.setValueAtTime(200, this.ctxAudio.currentTime);
+        osc.frequency.linearRampToValueAtTime(100, this.ctxAudio.currentTime + 0.3);
+        gain.gain.setValueAtTime(0.15, this.ctxAudio.currentTime);
         gain.gain.linearRampToValueAtTime(0.01, this.ctxAudio.currentTime + 0.3);
-        osc.connect(gain);
-        gain.connect(this.ctxAudio.destination);
-        osc.start();
-        osc.stop(this.ctxAudio.currentTime + 0.3);
+        osc.connect(gain); gain.connect(this.ctxAudio.destination);
+        osc.start(); osc.stop(this.ctxAudio.currentTime + 0.3);
     }
 
-    reproducirDisparoLuz() {
-        this.inicializar();
-        if (!this.ctxAudio) return;
-        const osc = this.ctxAudio.createOscillator();
-        const gain = this.ctxAudio.createGain();
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(800, this.ctxAudio.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(200, this.ctxAudio.currentTime + 0.25);
-        gain.gain.setValueAtTime(0.2, this.ctxAudio.currentTime);
-        gain.gain.linearRampToValueAtTime(0.01, this.ctxAudio.currentTime + 0.25);
-        osc.connect(gain);
-        gain.connect(this.ctxAudio.destination);
-        osc.start();
-        osc.stop(this.ctxAudio.currentTime + 0.25);
+    decirDerrota() {
+        if ('speechSynthesis' in window) {
+            const utterance = new SpeechSynthesisUtterance("¡Tú has muerto!");
+            utterance.rate = 0.85;
+            utterance.pitch = 0.5;
+            utterance.lang = 'es-ES';
+            window.speechSynthesis.speak(utterance);
+        }
     }
 }
-
-const sfx = new GeneradorSonido();
+const sfx = new SistemaAudio();
 
 
 // ============================================
-// ARMA Y HABILIDAD (Cátedra)
+// SISTEMA DE LOGS Y CONSOLA VISUAL
+// ============================================
+function registrarLog(mensaje: string) {
+    console.log(`[LOG]: "${mensaje}"`);
+    const logContent = document.getElementById("logContent");
+    if (logContent) {
+        const div = document.createElement("div");
+        div.className = "log-item";
+        div.innerText = `[LOG]: "${mensaje}"`;
+        logContent.appendChild(div);
+        logContent.scrollTop = logContent.scrollHeight;
+    }
+}
+
+(window as any).toggleLog = () => {
+    const panel = document.getElementById("logPanel");
+    if (panel) {
+        panel.style.display = panel.style.display === "none" ? "flex" : "none";
+    }
+};
+
+
+// ============================================
+// ARMA
 // ============================================
 class Arma 
 {
     constructor(private nombre: string, private danio: number) {}
-    atacar(): void { console.log(`⚔️ Ataque con ${this.nombre}: ${this.danio} puntos de daño`); }
-    getDanio(): number { return this.danio; }
-    getNombre(): string { return this.nombre; }
-}
 
-class Habilidad 
-{
-    constructor(private nombre: string, private poder: number) {}
-    usar(): void { console.log(`✨ Se utiliza ${this.nombre}: ${this.poder} puntos de poder`); }
+    atacar(): void 
+    {
+        registrarLog(`Ataca con ${this.nombre}: ${this.danio} puntos de daño`);
+    }
+
+    getDanio(): number { return this.danio; }
     getNombre(): string { return this.nombre; }
 }
 
 
 // ============================================
-// PROYECTIL
+// HABILIDAD
+// ============================================
+class Habilidad 
+{
+    constructor(private nombre: string, private poder: number) {}
+
+    usar(): void 
+    {
+        registrarLog(`Se utiliza ${this.nombre}: ${this.poder} puntos de poder`);
+    }
+
+    getNombre(): string { return this.nombre; }
+}
+
+
+// ============================================
+// CLASE AUXILIAR PARA PROYECTILES
 // ============================================
 class Proyectil {
     constructor(public x: number, public y: number, public dx: number, public dy: number, public color: string) {}
@@ -167,34 +188,44 @@ class Personaje
 
     atacar(proyectiles: Proyectil[]): void 
     {
+        registrarLog(`${this.nombre} ataca:`);
         this.arma.atacar();
-        sfx.reproducirDisparoLuz();
+        sfx.reproducirLaser();
         const colorProyectil = this.arma.getNombre().includes("plasma") ? "#00ffcc" : "#ff00ff";
         proyectiles.push(new Proyectil(this.x, this.y, this.direccionX * 8, this.direccionY * 8, colorProyectil));
     }
 
-    usarHabilidad(): void { this.habilidad.usar(); }
+    usarHabilidad(): void 
+    {
+        registrarLog(`${this.nombre} utiliza una habilidad:`);
+        this.habilidad.usar();
+        if (this.habilidad.getNombre().includes("Sanación")) {
+            sfx.reproducirSanacion();
+        } else {
+            sfx.reproducirEscudo();
+        }
+    }
 
     cambiarArma(nuevaArma: Arma): void 
     {
         this.arma = nuevaArma;
+        registrarLog(`${this.nombre} ahora utiliza ${nuevaArma.getNombre()}`);
         if (nuevaArma.getNombre().includes("plasma")) {
             sfx.reproducirLaser();
         } else {
             sfx.reproducirArco();
         }
-        console.log(`${this.nombre} ahora utiliza ${nuevaArma.getNombre()}`);
     }
 
     cambiarHabilidad(nuevaHabilidad: Habilidad): void 
     {
         this.habilidad = nuevaHabilidad;
+        registrarLog(`${this.nombre} ahora usa la habilidad ${nuevaHabilidad.getNombre()}`);
         if (nuevaHabilidad.getNombre().includes("Sanación")) {
             sfx.reproducirSanacion();
         } else {
             sfx.reproducirEscudo();
         }
-        console.log(`${this.nombre} ahora usa la habilidad ${nuevaHabilidad.getNombre()}`);
     }
 
     mover(dirX: number, dirY: number, maxX: number, maxY: number): void 
@@ -288,11 +319,11 @@ class Personaje
 // CONFIGURACIÓN Y BUCLE PRINCIPAL
 // ============================================
 const espada = new Arma("Espada de plasma flúor", 30);
-const arco = new Arma("Arco láser neón", 20);
+const arco = new Arma("Arco Neón", 20);
 const curacion = new Habilidad("Sanación Cuántica", 25);
-const escudo = new Habilidad("Barrera de Iones", 15);
+const escudo = new Habilidad("Barrera", 15);
 
-const heroe = new Personaje("Guerrero Cyber", 100, espada, curacion, 300, 175);
+const heroe = new Personaje("Guerrero Cyber", 100, espada, curacion, 300, 150);
 const proyectiles: Proyectil[] = [];
 
 const canvas = document.getElementById("gameCanvas") as HTMLCanvasElement;
@@ -302,7 +333,7 @@ const estadoTeclas: { [key: string]: boolean } = {};
 window.addEventListener("keydown", (e) => { estadoTeclas[e.key] = true; });
 window.addEventListener("keyup", (e) => { estadoTeclas[e.key] = false; });
 
-// Conexión con los botones de la interfaz
+// Conexión con los botones de la interfaz HTML
 (window as any).cambiarArmaEspada = () => heroe.cambiarArma(espada);
 (window as any).cambiarArmaArco = () => heroe.cambiarArma(arco);
 (window as any).cambiarHabCuracion = () => heroe.cambiarHabilidad(curacion);
