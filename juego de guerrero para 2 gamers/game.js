@@ -1,6 +1,6 @@
 "use strict";
 // ============================================
-// SISTEMA DE VOZ Y AUDIO (Sintetizador nativo bilingüe/castellano)
+// SISTEMA DE AUDIO Y VOZ SINTETIZADA
 // ============================================
 class SistemaAudio {
     ctxAudio = null;
@@ -81,13 +81,33 @@ class SistemaAudio {
         if ('speechSynthesis' in window) {
             const utterance = new SpeechSynthesisUtterance("¡Tú has muerto!");
             utterance.rate = 0.85;
-            utterance.pitch = 0.5; // Voz grave y seria
+            utterance.pitch = 0.5;
             utterance.lang = 'es-ES';
             window.speechSynthesis.speak(utterance);
         }
     }
 }
 const sfx = new SistemaAudio();
+// ============================================
+// SISTEMA DE LOGS Y CONSOLA VISUAL
+// ============================================
+function registrarLog(mensaje) {
+    console.log(`[LOG]: "${mensaje}"`);
+    const logContent = document.getElementById("logContent");
+    if (logContent) {
+        const div = document.createElement("div");
+        div.className = "log-item";
+        div.innerText = `[LOG]: "${mensaje}"`;
+        logContent.appendChild(div);
+        logContent.scrollTop = logContent.scrollHeight;
+    }
+}
+window.toggleLog = () => {
+    const panel = document.getElementById("logPanel");
+    if (panel) {
+        panel.style.display = panel.style.display === "none" ? "flex" : "none";
+    }
+};
 // ============================================
 // CLASES BASE (Cátedra)
 // ============================================
@@ -98,7 +118,7 @@ class Arma {
         this.nombre = nombre;
         this.danio = danio;
     }
-    atacar() { console.log(`⚔️ Ataque con ${this.nombre}: ${this.danio}`); }
+    atacar() { registrarLog(`Ataque con ${this.nombre}: ${this.danio} puntos de daño`); }
 }
 class Habilidad {
     nombre;
@@ -107,10 +127,10 @@ class Habilidad {
         this.nombre = nombre;
         this.poder = poder;
     }
-    usar() { console.log(`✨ Habilidad ${this.nombre}: ${this.poder}`); }
+    usar() { registrarLog(`Se utiliza ${this.nombre}: ${this.poder} puntos de poder`); }
 }
 // ============================================
-// CLASE AUXILIAR PARA MURCIÉLAGOS (Efecto al morir)
+// CLASE MURCIÉLAGO
 // ============================================
 class Murcielago {
     centroX;
@@ -200,8 +220,8 @@ class Personaje {
     direccionX = 1;
     puntaje = 0;
     tieneEscudo = false;
-    yaGritoDerrota = false;
     murcielagos = [];
+    yaGritoDerrota = false;
     constructor(id, nombre, arma, habilidadCuracion, habilidadEscudo, posX, posY, colorCuerpo) {
         this.id = id;
         this.nombre = nombre;
@@ -218,26 +238,29 @@ class Personaje {
         if (this.tieneEscudo) {
             this.tieneEscudo = false;
             sfx.reproducirEscudo();
+            registrarLog(`P${this.id} (${this.nombre}): El escudo absorbió el daño`);
             return;
         }
         this.vida -= danio;
         sfx.reproducirGolpe();
+        registrarLog(`P${this.id} (${this.nombre}) recibe ${danio} de daño. HP restante: ${this.vida}`);
         if (this.vida <= 0) {
             this.vida = 0;
             this.viva = false;
-            // AÑADE ESTO: Genera los murciélagos al morir
+            registrarLog(`P${this.id} (${this.nombre}) ha muerto. ¡R.I.P!`);
             for (let i = 0; i < 3; i++) {
                 this.murcielagos.push(new Murcielago(this.x, this.y));
             }
             if (!this.yaGritoDerrota) {
                 this.yaGritoDerrota = true;
-                sfx.decirDerrota(); // Dice "¡Tú has muerto!"
+                sfx.decirDerrota();
             }
         }
     }
     disparar(proyectiles) {
         if (!this.viva)
             return;
+        registrarLog(`P${this.id} (${this.nombre}) ataca:`);
         this.arma.atacar();
         sfx.reproducirDisparo();
         proyectiles.push(new Proyectil(this.x, this.y - 15, this.direccionX * 7, 0, this.colorCuerpo, this.id));
@@ -245,18 +268,22 @@ class Personaje {
     curarse() {
         if (!this.viva)
             return;
+        registrarLog(`P${this.id} (${this.nombre}) utiliza habilidad:`);
         this.habilidadCuracion.usar();
         sfx.reproducirCuracion();
         this.vida += 20;
         if (this.vida > 100)
-            this.vida = 100; // Máximo 100 de vida
+            this.vida = 100;
+        registrarLog(`P${this.id} se curó. HP actual: ${this.vida}`);
     }
     activarEscudo() {
         if (!this.viva)
             return;
+        registrarLog(`P${this.id} (${this.nombre}) utiliza habilidad:`);
         this.habilidadEscudo.usar();
         sfx.reproducirEscudo();
         this.tieneEscudo = true;
+        registrarLog(`P${this.id} activó Escudo protector`);
     }
     mover(dirX, dirY, maxX, maxY) {
         if (!this.viva)
@@ -278,7 +305,6 @@ class Personaje {
     dibujar(ctx) {
         ctx.save();
         if (!this.viva) {
-            // Lápida
             ctx.fillStyle = "#6c757d";
             ctx.fillRect(this.x - 12, this.y - 25, 24, 30);
             ctx.beginPath();
@@ -290,7 +316,6 @@ class Personaje {
             ctx.fillStyle = "#ff4d4d";
             ctx.font = "bold 11px sans-serif";
             ctx.fillText(`R.I.P J${this.id}`, this.x - 22, this.y + 20);
-            // AÑADE ESTO: Actualiza y dibuja los murciélagos volando
             for (let m of this.murcielagos) {
                 m.actualizar();
                 m.dibujar(ctx);
@@ -298,7 +323,6 @@ class Personaje {
             ctx.restore();
             return;
         }
-        // Si tiene escudo activo, dibujamos un halo protector celeste brillante
         if (this.tieneEscudo) {
             ctx.strokeStyle = "#00f5d4";
             ctx.lineWidth = 3;
@@ -306,26 +330,22 @@ class Personaje {
             ctx.arc(this.x, this.y - 10, 32, 0, Math.PI * 2);
             ctx.stroke();
         }
-        // Cuerpo Humanoide
         ctx.fillStyle = this.colorCuerpo;
         ctx.fillRect(this.x - 10, this.y - 15, 20, 26);
         ctx.strokeStyle = "#ffffff";
         ctx.lineWidth = 1;
         ctx.strokeRect(this.x - 10, this.y - 15, 20, 26);
-        // Cabeza
         ctx.fillStyle = "#ffb703";
         ctx.beginPath();
         ctx.arc(this.x, this.y - 25, 9, 0, Math.PI * 2);
         ctx.fill();
         ctx.stroke();
-        // Arma gráfica
         ctx.strokeStyle = "#00ffcc";
         ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.moveTo(this.x + (this.direccionX * 10), this.y - 5);
         ctx.lineTo(this.x + (this.direccionX * 25), this.y - 18);
         ctx.stroke();
-        // UI Texto flotante
         ctx.fillStyle = "#fff";
         ctx.font = "11px sans-serif";
         ctx.fillText(`P${this.id}: ${this.nombre}`, this.x - 30, this.y - 42);
@@ -353,7 +373,6 @@ window.addEventListener("keydown", (e) => {
         jugador2.disparar(proyectiles);
 });
 window.addEventListener("keyup", (e) => { estadoTeclas[e.key] = false; });
-// Conexión botones laterales (Ataque, Curación, Escudo)
 window.accionP1 = (tipo) => {
     if (tipo === 'atacar')
         jugador1.disparar(proyectiles);
@@ -393,7 +412,6 @@ function gameLoop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = "#080708";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    // Movimiento P1
     let dirX1 = 0, dirY1 = 0;
     if (estadoTeclas["a"] || estadoTeclas["A"])
         dirX1 = -1;
@@ -404,7 +422,6 @@ function gameLoop() {
     if (estadoTeclas["s"] || estadoTeclas["S"])
         dirY1 = 1;
     jugador1.mover(dirX1, dirY1, canvas.width, canvas.height);
-    // Movimiento P2
     let dirX2 = 0, dirY2 = 0;
     if (estadoTeclas["ArrowLeft"])
         dirX2 = -1;
@@ -415,7 +432,6 @@ function gameLoop() {
     if (estadoTeclas["ArrowDown"])
         dirY2 = 1;
     jugador2.mover(dirX2, dirY2, canvas.width, canvas.height);
-    // Actualizar Proyectiles y Colisiones
     for (let i = proyectiles.length - 1; i >= 0; i--) {
         const p = proyectiles[i];
         p.actualizar(canvas.width, canvas.height);
