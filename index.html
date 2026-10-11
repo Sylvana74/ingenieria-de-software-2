@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Menú de Juegos - Ingeniería de Software 2</title>
+    <style>
+        body {
+            background: #0b090a;
+            color: #fff;
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        h1 { color: #00ffcc; margin-bottom: 30px; font-size: 1.8rem; text-shadow: 0 0 10px rgba(0,255,204,0.4); }
+        .menu-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 320px;
+        }
+        .btn-juego {
+            background: #161a1d;
+            color: #00ffcc;
+            border: 2px solid #00ffcc;
+            padding: 15px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+            transition: all 0.2s;
+            box-shadow: 0 0 10px rgba(0,255,204,0.2);
+        }
+        .btn-juego:hover {
+            background: #00ffcc;
+            color: #0b090a;
+            box-shadow: 0 0 20px rgba(0,255,204,0.5);
+        }
+    </style>
+</head>
+<body>
+    <h1>Selecciona el Modo de Juego</h1>
+    <div class="menu-container">
+        <a href="./juego-canvas/index.html" class="btn-juego">🎮 Modo 1 Jugador</a>
+        <a href="./juego de guerrero para 2 gamers/index.html" class="btn-juego">⚔️ Modo 2 Jugadores</a>
+    </div>
+</body>
+</html>
