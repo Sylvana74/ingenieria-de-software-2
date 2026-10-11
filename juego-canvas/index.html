@@ -2,41 +2,84 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Prueba Gráfica - Cátedra</title>
+    <title>Juego - Cátedra Ingeniería de Software 2</title>
     <style>
         body { 
-            background: #111; 
+            background: #0b090a; 
             color: #fff; 
             font-family: sans-serif; 
             display: flex; 
             flex-direction: column; 
             align-items: center; 
             justify-content: center; 
-            height: 100vh; 
             margin: 0; 
+            padding: 20px;
         }
+        h1 { font-size: 1.5rem; margin-bottom: 10px; color: #00ffcc; text-shadow: 0 0 10px rgba(0,255,204,0.5); }
         canvas { 
-            border: 2px solid #555; 
-            box-shadow: 0 0 15px rgba(0,0,0,0.8); 
+            border: 2px solid #00ffcc; 
+            box-shadow: 0 0 20px rgba(0,255,204,0.3); 
+            background: #0b090a;
         }
-        .instrucciones {
+        .panel-control {
             margin-top: 15px;
-            background: #222;
-            padding: 10px 20px;
-            border-radius: 8px;
-            border: 1px solid #444;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+            background: #161a1d;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #333;
         }
+        .grupo-botones {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        button { 
+            background: #212529; 
+            color: #00ffcc; 
+            border: 1px solid #00ffcc; 
+            padding: 8px 14px; 
+            cursor: pointer; 
+            border-radius: 5px; 
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        button:hover { 
+            background: #00ffcc; 
+            color: #0b090a; 
+            box-shadow: 0 0 10px #00ffcc;
+        }
+        .btn-accion { color: #ff00ff; border-color: #ff00ff; }
+        .btn-accion:hover { background: #ff00ff; color: #0b090a; box-shadow: 0 0 10px #ff00ff; }
     </style>
 </head>
 <body>
 
     <h1>Visualizador de Personaje (TypeScript + Canvas)</h1>
     
-    <!-- Aquí se inyecta el canvas automáticamente o puedes dejarlo fijo -->
-    <canvas id="gameCanvas" width="600" height="400"></canvas>
+    <canvas id="gameCanvas" width="600" height="350"></canvas>
 
-    <div class="instrucciones">
-        <p>Abre la consola del navegador (F12) para ver los mensajes de la cátedra.</p>
+    <div class="panel-control">
+        <div><strong>Movimiento:</strong></div>
+        <div class="grupo-botones">
+            <button id="btnArriba">⬆️ Arriba</button>
+            <button id="btnAbajo">⬇️ Abajo</button>
+            <button id="btnIzquierda">⬅️ Izquierda</button>
+            <button id="btnDerecha">➡️ Derecha</button>
+        </div>
+
+        <div><strong>Equipamiento y Acciones:</strong></div>
+        <div class="grupo-botones">
+            <button onclick="cambiarArmaEspada()">⚔️ Espada Flúor</button>
+            <button onclick="cambiarArmaArco()">🏹 Arco Neón</button>
+            <button onclick="cambiarHabCuracion()">✨ Sanación</button>
+            <button onclick="cambiarHabEscudo()">🛡️ Barrera</button>
+            <button class="btn-accion" onclick="dispararLuz()">💥 Disparar Luz</button>
+        </div>
     </div>
 
     <!-- Cargamos el archivo JavaScript compilado -->

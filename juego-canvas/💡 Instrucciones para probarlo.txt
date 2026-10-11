@@ -6,8 +6,12 @@ tsc game.ts
 
 Abre tu index.html en el navegador.
 Controles interactivos:
-Movimiento: Usa las Flechas del teclado o las teclas W, A, S, D para mover al personaje libremente por la pantalla.
+Controles:
 
-Cambiar de Arma: Presiona la tecla 1 (Espada de fuego) o la tecla 2 (Arco mágico). ¡Verás cómo cambia al instante el gráfico del arma!
+Movimiento: W, A, S, D o Flechas.
 
-Cambiar de Habilidad: Presiona la tecla 3 (Curación) o la tecla 4 (Escudo mágico). ¡Verás cómo cambia el aura circular que lo rodea!
+Cambiar Arma: Teclas 1 y 2.
+
+Cambiar Habilidad: Teclas 3 y 4.
+
+Atacar / Disparar luz: Barra Espaciadora o F.

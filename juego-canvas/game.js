@@ -1,6 +1,103 @@
 "use strict";
 // ============================================
-// ARMA
+// SISTEMA DE AUDIO NATIVO (Efectos de ruido / Sonidos)
+// ============================================
+class GeneradorSonido {
+    ctxAudio = null;
+    inicializar() {
+        if (!this.ctxAudio) {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            this.ctxAudio = new AudioCtx();
+        }
+        if (this.ctxAudio.state === 'suspended') {
+            this.ctxAudio.resume();
+        }
+    }
+    reproducirLaser() {
+        this.inicializar();
+        if (!this.ctxAudio)
+            return;
+        const osc = this.ctxAudio.createOscillator();
+        const gain = this.ctxAudio.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(600, this.ctxAudio.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(100, this.ctxAudio.currentTime + 0.15);
+        gain.gain.setValueAtTime(0.15, this.ctxAudio.currentTime);
+        gain.gain.linearRampToValueAtTime(0.01, this.ctxAudio.currentTime + 0.15);
+        osc.connect(gain);
+        gain.connect(this.ctxAudio.destination);
+        osc.start();
+        osc.stop(this.ctxAudio.currentTime + 0.15);
+    }
+    reproducirArco() {
+        this.inicializar();
+        if (!this.ctxAudio)
+            return;
+        const osc = this.ctxAudio.createOscillator();
+        const gain = this.ctxAudio.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(300, this.ctxAudio.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(800, this.ctxAudio.currentTime + 0.2);
+        gain.gain.setValueAtTime(0.1, this.ctxAudio.currentTime);
+        gain.gain.linearRampToValueAtTime(0.01, this.ctxAudio.currentTime + 0.2);
+        osc.connect(gain);
+        gain.connect(this.ctxAudio.destination);
+        osc.start();
+        osc.stop(this.ctxAudio.currentTime + 0.2);
+    }
+    reproducirSanacion() {
+        this.inicializar();
+        if (!this.ctxAudio)
+            return;
+        [440, 554.37, 659.25].forEach((freq, i) => {
+            const osc = this.ctxAudio.createOscillator();
+            const gain = this.ctxAudio.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, this.ctxAudio.currentTime + (i * 0.08));
+            gain.gain.setValueAtTime(0.08, this.ctxAudio.currentTime + (i * 0.08));
+            gain.gain.linearRampToValueAtTime(0.01, this.ctxAudio.currentTime + (i * 0.08) + 0.25);
+            osc.connect(gain);
+            gain.connect(this.ctxAudio.destination);
+            osc.start(this.ctxAudio.currentTime + (i * 0.08));
+            osc.stop(this.ctxAudio.currentTime + (i * 0.08) + 0.25);
+        });
+    }
+    reproducirEscudo() {
+        this.inicializar();
+        if (!this.ctxAudio)
+            return;
+        const osc = this.ctxAudio.createOscillator();
+        const gain = this.ctxAudio.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(150, this.ctxAudio.currentTime);
+        osc.frequency.linearRampToValueAtTime(80, this.ctxAudio.currentTime + 0.3);
+        gain.gain.setValueAtTime(0.12, this.ctxAudio.currentTime);
+        gain.gain.linearRampToValueAtTime(0.01, this.ctxAudio.currentTime + 0.3);
+        osc.connect(gain);
+        gain.connect(this.ctxAudio.destination);
+        osc.start();
+        osc.stop(this.ctxAudio.currentTime + 0.3);
+    }
+    reproducirDisparoLuz() {
+        this.inicializar();
+        if (!this.ctxAudio)
+            return;
+        const osc = this.ctxAudio.createOscillator();
+        const gain = this.ctxAudio.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(800, this.ctxAudio.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(200, this.ctxAudio.currentTime + 0.25);
+        gain.gain.setValueAtTime(0.2, this.ctxAudio.currentTime);
+        gain.gain.linearRampToValueAtTime(0.01, this.ctxAudio.currentTime + 0.25);
+        osc.connect(gain);
+        gain.connect(this.ctxAudio.destination);
+        osc.start();
+        osc.stop(this.ctxAudio.currentTime + 0.25);
+    }
+}
+const sfx = new GeneradorSonido();
+// ============================================
+// ARMA Y HABILIDAD (Cátedra)
 // ============================================
 class Arma {
     nombre;
@@ -9,19 +106,10 @@ class Arma {
         this.nombre = nombre;
         this.danio = danio;
     }
-    atacar() {
-        console.log(`⚔️ Ataque con ${this.nombre}: ${this.danio} puntos de daño`);
-    }
-    getDanio() {
-        return this.danio;
-    }
-    getNombre() {
-        return this.nombre;
-    }
+    atacar() { console.log(`⚔️ Ataque con ${this.nombre}: ${this.danio} puntos de daño`); }
+    getDanio() { return this.danio; }
+    getNombre() { return this.nombre; }
 }
-// ============================================
-// HABILIDAD
-// ============================================
 class Habilidad {
     nombre;
     poder;
@@ -29,11 +117,38 @@ class Habilidad {
         this.nombre = nombre;
         this.poder = poder;
     }
-    usar() {
-        console.log(`✨ Se utiliza ${this.nombre}: ${this.poder} puntos de poder`);
+    usar() { console.log(`✨ Se utiliza ${this.nombre}: ${this.poder} puntos de poder`); }
+    getNombre() { return this.nombre; }
+}
+// ============================================
+// PROYECTIL
+// ============================================
+class Proyectil {
+    x;
+    y;
+    dx;
+    dy;
+    color;
+    constructor(x, y, dx, dy, color) {
+        this.x = x;
+        this.y = y;
+        this.dx = dx;
+        this.dy = dy;
+        this.color = color;
     }
-    getNombre() {
-        return this.nombre;
+    actualizar() {
+        this.x += this.dx;
+        this.y += this.dy;
+    }
+    dibujar(ctx) {
+        ctx.save();
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = this.color;
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
     }
 }
 // ============================================
@@ -44,10 +159,11 @@ class Personaje {
     vida;
     arma;
     habilidad;
-    // Coordenadas de posición y velocidad para el movimiento
     x;
     y;
     velocidad = 4;
+    direccionX = 1;
+    direccionY = 0;
     constructor(nombre, vida, arma, habilidad, posX, posY) {
         this.nombre = nombre;
         this.vida = vida;
@@ -56,132 +172,169 @@ class Personaje {
         this.x = posX;
         this.y = posY;
     }
-    atacar() {
-        console.log(`${this.nombre} ataca:`);
+    atacar(proyectiles) {
         this.arma.atacar();
+        sfx.reproducirDisparoLuz();
+        const colorProyectil = this.arma.getNombre().includes("plasma") ? "#00ffcc" : "#ff00ff";
+        proyectiles.push(new Proyectil(this.x, this.y, this.direccionX * 8, this.direccionY * 8, colorProyectil));
     }
-    usarHabilidad() {
-        console.log(`${this.nombre} utiliza una habilidad:`);
-        this.habilidad.usar();
-    }
+    usarHabilidad() { this.habilidad.usar(); }
     cambiarArma(nuevaArma) {
         this.arma = nuevaArma;
+        if (nuevaArma.getNombre().includes("plasma")) {
+            sfx.reproducirLaser();
+        }
+        else {
+            sfx.reproducirArco();
+        }
         console.log(`${this.nombre} ahora utiliza ${nuevaArma.getNombre()}`);
     }
     cambiarHabilidad(nuevaHabilidad) {
         this.habilidad = nuevaHabilidad;
+        if (nuevaHabilidad.getNombre().includes("Sanación")) {
+            sfx.reproducirSanacion();
+        }
+        else {
+            sfx.reproducirEscudo();
+        }
         console.log(`${this.nombre} ahora usa la habilidad ${nuevaHabilidad.getNombre()}`);
     }
-    recibirDanio(danio) {
-        this.vida -= danio;
-        console.log(`${this.nombre} recibió ${danio} puntos de daño.`);
-        console.log(`Vida restante: ${this.vida}`);
+    mover(dirX, dirY, maxX, maxY) {
+        if (dirX !== 0 || dirY !== 0) {
+            this.direccionX = dirX !== 0 ? dirX : this.direccionX;
+            this.direccionY = dirY;
+        }
+        this.x += dirX * this.velocidad;
+        this.y += dirY * this.velocidad;
+        if (this.x < 30)
+            this.x = 30;
+        if (this.x > maxX - 30)
+            this.x = maxX - 30;
+        if (this.y < 40)
+            this.y = 40;
+        if (this.y > maxY - 40)
+            this.y = maxY - 40;
     }
-    // Métodos de movimiento dentro del canvas
-    mover(direccion, maxX, maxY) {
-        if (direccion === "ARRIBA" && this.y > 40)
-            this.y -= this.velocidad;
-        if (direccion === "ABAJO" && this.y < maxY - 40)
-            this.y += this.velocidad;
-        if (direccion === "IZQUIERDA" && this.x > 40)
-            this.x -= this.velocidad;
-        if (direccion === "DERECHA" && this.x < maxX - 40)
-            this.x += this.velocidad;
-    }
-    // ============================================
-    // RENDERIZADO GRÁFICO (HTML5 Canvas)
-    // ============================================
     dibujar(ctx) {
-        // 1. Dibujar efecto visual según la Habilidad equipada
         const nombreHabilidad = this.habilidad.getNombre();
-        ctx.lineWidth = 3;
-        if (nombreHabilidad.includes("Curación")) {
-            ctx.strokeStyle = "#2ec4b6";
-            ctx.fillStyle = "rgba(46, 196, 182, 0.2)";
-        }
-        else {
-            ctx.strokeStyle = "#f72585";
-            ctx.fillStyle = "rgba(247, 37, 133, 0.2)";
-        }
+        ctx.save();
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = nombreHabilidad.includes("Sanación") ? "#00ff88" : "#ff3366";
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = nombreHabilidad.includes("Sanación") ? "#00ff88" : "#ff3366";
+        ctx.fillStyle = nombreHabilidad.includes("Sanación") ? "rgba(0, 255, 136, 0.1)" : "rgba(255, 51, 102, 0.1)";
         ctx.beginPath();
-        ctx.arc(this.x, this.y, 45, 0, Math.PI * 2);
+        ctx.arc(this.x, this.y, 42, 0, Math.PI * 2);
         ctx.fill();
         ctx.stroke();
-        // 2. Dibujar el cuerpo del Personaje
-        ctx.fillStyle = "#3a86ff";
+        ctx.restore();
+        // Personaje Humanoide
+        ctx.fillStyle = "#2b2d42";
+        ctx.fillRect(this.x - 12, this.y - 12, 24, 28);
+        ctx.strokeStyle = "#8d99ae";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(this.x - 12, this.y - 12, 24, 28);
+        ctx.fillStyle = "#ffb703";
         ctx.beginPath();
-        ctx.arc(this.x, this.y, 25, 0, Math.PI * 2);
+        ctx.arc(this.x, this.y - 24, 11, 0, Math.PI * 2);
         ctx.fill();
-        ctx.strokeStyle = "#1d3557";
         ctx.stroke();
-        // 3. Dibujar gráficamente el Arma equipada
+        ctx.fillStyle = "#d90429";
+        ctx.beginPath();
+        ctx.arc(this.x, this.y - 28, 10, Math.PI, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#1d3557";
+        ctx.fillRect(this.x - 10, this.y + 16, 8, 14);
+        ctx.fillRect(this.x + 2, this.y + 16, 8, 14);
         const nombreArma = this.arma.getNombre();
-        ctx.lineWidth = 4;
-        if (nombreArma.includes("Espada")) {
-            ctx.strokeStyle = "#e71d36";
+        ctx.save();
+        ctx.shadowBlur = 15;
+        if (nombreArma.includes("plasma")) {
+            ctx.shadowColor = "#00ffcc";
+            ctx.strokeStyle = "#00ffcc";
+            ctx.lineWidth = 5;
             ctx.beginPath();
-            ctx.moveTo(this.x + 15, this.y);
-            ctx.lineTo(this.x + 45, this.y - 20);
+            ctx.moveTo(this.x + (this.direccionX * 10), this.y);
+            ctx.lineTo(this.x + (this.direccionX * 35), this.y - 20);
             ctx.stroke();
         }
         else {
-            ctx.strokeStyle = "#ffb703";
+            ctx.shadowColor = "#ff00ff";
+            ctx.strokeStyle = "#ff00ff";
+            ctx.lineWidth = 4;
             ctx.beginPath();
-            ctx.arc(this.x + 20, this.y, 15, -Math.PI / 2, Math.PI / 2);
+            ctx.arc(this.x + (this.direccionX * 15), this.y, 16, -Math.PI / 2, Math.PI / 2);
             ctx.stroke();
         }
-        // 4. Textos informativos flotantes sobre el personaje
+        ctx.restore();
         ctx.fillStyle = "#ffffff";
-        ctx.font = "12px sans-serif";
-        ctx.fillText(`${this.nombre}`, this.x - 30, this.y - 55);
-        ctx.fillText(`Arma: ${this.arma.getNombre()}`, this.x - 55, this.y + 60);
-        ctx.fillText(`Habilidad: ${this.habilidad.getNombre()}`, this.x - 55, this.y + 78);
+        ctx.font = "11px sans-serif";
+        ctx.fillText(`${this.nombre}`, this.x - 30, this.y - 50);
+        ctx.fillStyle = "#00ffcc";
+        ctx.fillText(`Arma: ${this.arma.getNombre()}`, this.x - 65, this.y + 50);
+        ctx.fillStyle = "#ff00ff";
+        ctx.fillText(`Habilidad: ${this.habilidad.getNombre()}`, this.x - 65, this.y + 66);
     }
 }
 // ============================================
-// CONFIGURACIÓN DE OBJETOS Y JUEGO
+// CONFIGURACIÓN Y BUCLE PRINCIPAL
 // ============================================
-const espada = new Arma("Espada de fuego", 30);
-const arco = new Arma("Arco mágico", 20);
-const curacion = new Habilidad("Curación", 25);
-const escudo = new Habilidad("Escudo mágico", 15);
-// Creamos al héroe en el centro del canvas (ancho 600, alto 400)
-const heroe = new Personaje("Guerrero Principal", 100, espada, curacion, 300, 200);
+const espada = new Arma("Espada de plasma flúor", 30);
+const arco = new Arma("Arco láser neón", 20);
+const curacion = new Habilidad("Sanación Cuántica", 25);
+const escudo = new Habilidad("Barrera de Iones", 15);
+const heroe = new Personaje("Guerrero Cyber", 100, espada, curacion, 300, 175);
+const proyectiles = [];
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
-// Control de teclas presionadas para movimiento fluido
-const teclasPresionadas = {};
-window.addEventListener("keydown", (e) => {
-    teclasPresionadas[e.key] = true;
-    // Cambios de arma y habilidad en tiempo real con teclas numéricas
-    if (e.key === "1")
-        heroe.cambiarArma(espada);
-    if (e.key === "2")
-        heroe.cambiarArma(arco);
-    if (e.key === "3")
-        heroe.cambiarHabilidad(curacion);
-    if (e.key === "4")
-        heroe.cambiarHabilidad(escudo);
-});
-window.addEventListener("keyup", (e) => {
-    teclasPresionadas[e.key] = false;
-});
-// Bucle principal del juego (Game Loop)
+const estadoTeclas = {};
+window.addEventListener("keydown", (e) => { estadoTeclas[e.key] = true; });
+window.addEventListener("keyup", (e) => { estadoTeclas[e.key] = false; });
+// Conexión con los botones de la interfaz
+window.cambiarArmaEspada = () => heroe.cambiarArma(espada);
+window.cambiarArmaArco = () => heroe.cambiarArma(arco);
+window.cambiarHabCuracion = () => heroe.cambiarHabilidad(curacion);
+window.cambiarHabEscudo = () => heroe.cambiarHabilidad(escudo);
+window.dispararLuz = () => {
+    heroe.atacar(proyectiles);
+    heroe.usarHabilidad();
+};
+function configurarBoton(id, teclaSimulada) {
+    const btn = document.getElementById(id);
+    if (!btn)
+        return;
+    btn.addEventListener("mousedown", () => { estadoTeclas[teclaSimulada] = true; });
+    btn.addEventListener("mouseup", () => { estadoTeclas[teclaSimulada] = false; });
+    btn.addEventListener("mouseleave", () => { estadoTeclas[teclaSimulada] = false; });
+    btn.addEventListener("touchstart", (e) => { e.preventDefault(); estadoTeclas[teclaSimulada] = true; });
+    btn.addEventListener("touchend", (e) => { e.preventDefault(); estadoTeclas[teclaSimulada] = false; });
+}
+configurarBoton("btnArriba", "ArrowUp");
+configurarBoton("btnAbajo", "ArrowDown");
+configurarBoton("btnIzquierda", "ArrowLeft");
+configurarBoton("btnDerecha", "ArrowRight");
 function gameLoop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    // Fondo de pantalla
-    ctx.fillStyle = "#1a1a1a";
+    ctx.fillStyle = "#0b090a";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    // Procesar movimiento según las teclas presionadas
-    if (teclasPresionadas["ArrowUp"] || teclasPresionadas["w"])
-        heroe.mover("ARRIBA", canvas.width, canvas.height);
-    if (teclasPresionadas["ArrowDown"] || teclasPresionadas["s"])
-        heroe.mover("ABAJO", canvas.width, canvas.height);
-    if (teclasPresionadas["ArrowLeft"] || teclasPresionadas["a"])
-        heroe.mover("IZQUIERDA", canvas.width, canvas.height);
-    if (teclasPresionadas["ArrowRight"] || teclasPresionadas["d"])
-        heroe.mover("DERECHA", canvas.width, canvas.height);
-    // Dibujar al personaje en su posición actual
+    let dirX = 0;
+    let dirY = 0;
+    if (estadoTeclas["ArrowUp"] || estadoTeclas["w"] || estadoTeclas["W"])
+        dirY = -1;
+    if (estadoTeclas["ArrowDown"] || estadoTeclas["s"] || estadoTeclas["S"])
+        dirY = 1;
+    if (estadoTeclas["ArrowLeft"] || estadoTeclas["a"] || estadoTeclas["A"])
+        dirX = -1;
+    if (estadoTeclas["ArrowRight"] || estadoTeclas["d"] || estadoTeclas["D"])
+        dirX = 1;
+    heroe.mover(dirX, dirY, canvas.width, canvas.height);
+    for (let i = proyectiles.length - 1; i >= 0; i--) {
+        proyectiles[i].actualizar();
+        proyectiles[i].dibujar(ctx);
+        if (proyectiles[i].x < 0 || proyectiles[i].x > canvas.width || proyectiles[i].y < 0 || proyectiles[i].y > canvas.height) {
+            proyectiles.splice(i, 1);
+        }
+    }
     heroe.dibujar(ctx);
     requestAnimationFrame(gameLoop);
 }
