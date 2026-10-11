@@ -110,6 +110,44 @@ class Habilidad {
     usar() { console.log(`✨ Habilidad ${this.nombre}: ${this.poder}`); }
 }
 // ============================================
+// CLASE AUXILIAR PARA MURCIÉLAGOS (Efecto al morir)
+// ============================================
+class Murcielago {
+    centroX;
+    centroY;
+    angulo = Math.random() * Math.PI * 2;
+    velocidadGiro = 0.05;
+    radio = 25;
+    constructor(centroX, centroY) {
+        this.centroX = centroX;
+        this.centroY = centroY;
+    }
+    actualizar() {
+        this.angulo += this.velocidadGiro;
+    }
+    dibujar(ctx) {
+        const x = this.centroX + Math.cos(this.angulo) * this.radio;
+        const y = (this.centroY - 30) + Math.sin(this.angulo * 2) * 10;
+        ctx.save();
+        ctx.fillStyle = "#111";
+        ctx.strokeStyle = "#444";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x - 8, y - 6);
+        ctx.lineTo(x - 4, y - 2);
+        ctx.lineTo(x - 10, y - 4);
+        ctx.lineTo(x, y + 4);
+        ctx.lineTo(x + 10, y - 4);
+        ctx.lineTo(x + 4, y - 2);
+        ctx.lineTo(x + 8, y - 6);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+    }
+}
+// ============================================
 // PROYECTIL
 // ============================================
 class Proyectil {
@@ -163,6 +201,7 @@ class Personaje {
     puntaje = 0;
     tieneEscudo = false;
     yaGritoDerrota = false;
+    murcielagos = [];
     constructor(id, nombre, arma, habilidadCuracion, habilidadEscudo, posX, posY, colorCuerpo) {
         this.id = id;
         this.nombre = nombre;
@@ -176,11 +215,9 @@ class Personaje {
     recibirDanio(danio) {
         if (!this.viva)
             return;
-        // Si tiene escudo activo, absorbe el golpe y lo rompe
         if (this.tieneEscudo) {
             this.tieneEscudo = false;
             sfx.reproducirEscudo();
-            console.log(`🛡️ ¡Escudo absorbió el golpe para P${this.id}!`);
             return;
         }
         this.vida -= danio;
@@ -188,9 +225,13 @@ class Personaje {
         if (this.vida <= 0) {
             this.vida = 0;
             this.viva = false;
+            // AÑADE ESTO: Genera los murciélagos al morir
+            for (let i = 0; i < 3; i++) {
+                this.murcielagos.push(new Murcielago(this.x, this.y));
+            }
             if (!this.yaGritoDerrota) {
                 this.yaGritoDerrota = true;
-                sfx.decirDerrota(); // ¡Dice "¡Tú has muerto!... ¡losser!" con cambio de tono!
+                sfx.decirDerrota(); // Dice "¡Tú has muerto!"
             }
         }
     }
@@ -249,6 +290,11 @@ class Personaje {
             ctx.fillStyle = "#ff4d4d";
             ctx.font = "bold 11px sans-serif";
             ctx.fillText(`R.I.P J${this.id}`, this.x - 22, this.y + 20);
+            // AÑADE ESTO: Actualiza y dibuja los murciélagos volando
+            for (let m of this.murcielagos) {
+                m.actualizar();
+                m.dibujar(ctx);
+            }
             ctx.restore();
             return;
         }

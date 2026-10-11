@@ -98,6 +98,45 @@ class Habilidad {
     usar(): void { console.log(`✨ Habilidad ${this.nombre}: ${this.poder}`); }
 }
 
+// ============================================
+// CLASE AUXILIAR PARA MURCIÉLAGOS (Efecto al morir)
+// ============================================
+class Murcielago {
+    private angulo: number = Math.random() * Math.PI * 2;
+    private velocidadGiro: number = 0.05;
+    private radio: number = 25;
+
+    constructor(public centroX: number, public centroY: number) {}
+
+    actualizar() {
+        this.angulo += this.velocidadGiro;
+    }
+
+    dibujar(ctx: CanvasRenderingContext2D) {
+        const x = this.centroX + Math.cos(this.angulo) * this.radio;
+        const y = (this.centroY - 30) + Math.sin(this.angulo * 2) * 10;
+
+        ctx.save();
+        ctx.fillStyle = "#111";
+        ctx.strokeStyle = "#444";
+        ctx.lineWidth = 1;
+
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x - 8, y - 6);
+        ctx.lineTo(x - 4, y - 2);
+        ctx.lineTo(x - 10, y - 4);
+        ctx.lineTo(x, y + 4);
+        ctx.lineTo(x + 10, y - 4);
+        ctx.lineTo(x + 4, y - 2);
+        ctx.lineTo(x + 8, y - 6);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+    }
+}
+
 
 // ============================================
 // PROYECTIL
@@ -141,6 +180,7 @@ class Personaje {
     public puntaje: number = 0;
     public tieneEscudo: boolean = false;
     private yaGritoDerrota: boolean = false;
+    public murcielagos: Murcielago[] = [];
 
     constructor(
         public id: number,
@@ -154,28 +194,32 @@ class Personaje {
         this.x = posX; this.y = posY;
     }
 
-    recibirDanio(danio: number) {
-        if (!this.viva) return;
-        
-        // Si tiene escudo activo, absorbe el golpe y lo rompe
-        if (this.tieneEscudo) {
-            this.tieneEscudo = false;
-            sfx.reproducirEscudo();
-            console.log(`🛡️ ¡Escudo absorbió el golpe para P${this.id}!`);
-            return;
+   recibirDanio(danio: number) {
+    if (!this.viva) return;
+
+    if (this.tieneEscudo) {
+        this.tieneEscudo = false;
+        sfx.reproducirEscudo();
+        return;
+    }
+
+    this.vida -= danio;
+    sfx.reproducirGolpe();
+    if (this.vida <= 0) {
+        this.vida = 0; 
+        this.viva = false;
+
+        // AÑADE ESTO: Genera los murciélagos al morir
+        for (let i = 0; i < 3; i++) {
+            this.murcielagos.push(new Murcielago(this.x, this.y));
         }
 
-        this.vida -= danio;
-        sfx.reproducirGolpe();
-        if (this.vida <= 0) {
-            this.vida = 0; 
-            this.viva = false;
-            if (!this.yaGritoDerrota) {
-                this.yaGritoDerrota = true;
-                sfx.decirDerrota(); // ¡Dice "¡Tú has muerto!... ¡losser!" con cambio de tono!
-            }
+        if (!this.yaGritoDerrota) {
+            this.yaGritoDerrota = true;
+            sfx.decirDerrota(); // Dice "¡Tú has muerto!"
         }
     }
+}
 
     disparar(proyectiles: Proyectil[]) {
         if (!this.viva) return;
@@ -214,7 +258,7 @@ class Personaje {
         ctx.save();
         
         if (!this.viva) {
-            // Lápida
+          // Lápida
             ctx.fillStyle = "#6c757d";
             ctx.fillRect(this.x - 12, this.y - 25, 24, 30);
             ctx.beginPath();
@@ -223,13 +267,20 @@ class Personaje {
             ctx.fillStyle = "#343a40";
             ctx.fillRect(this.x - 2, this.y - 30, 4, 18);
             ctx.fillRect(this.x - 6, this.y - 22, 12, 4);
-            
+
             ctx.fillStyle = "#ff4d4d";
             ctx.font = "bold 11px sans-serif";
             ctx.fillText(`R.I.P J${this.id}`, this.x - 22, this.y + 20);
-            ctx.restore();
-            return;
-        }
+
+    // AÑADE ESTO: Actualiza y dibuja los murciélagos volando
+    for (let m of this.murcielagos) {
+        m.actualizar();
+        m.dibujar(ctx);
+    }
+
+    ctx.restore();
+    return;
+}
 
         // Si tiene escudo activo, dibujamos un halo protector celeste brillante
         if (this.tieneEscudo) {
