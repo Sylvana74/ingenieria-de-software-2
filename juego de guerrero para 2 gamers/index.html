@@ -27,7 +27,7 @@
             padding: 15px;
             border-radius: 10px;
             border: 1px solid #333;
-            width: 140px;
+            width: 155px;
             text-align: center;
         }
         h3 { font-size: 0.9rem; margin: 0 0 5px 0; color: #00ffcc; }
@@ -43,13 +43,16 @@
             padding: 8px; 
             cursor: pointer; 
             border-radius: 5px; 
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             font-weight: bold;
             transition: all 0.2s;
         }
-        button:hover { background: #00ffcc; color: #0b090a; border-color: #00ffcc; }
+        button:hover:not(:disabled) { background: #00ffcc; color: #0b090a; border-color: #00ffcc; }
+        button:disabled { background: #111; color: #555; border-color: #333; cursor: not-allowed; }
         .btn-p1 { border-color: #00ffff; color: #00ffff; }
         .btn-p2 { border-color: #ff33cc; color: #ff33cc; }
+        .btn-especial { background: #330022; border-color: #ff0055; color: #ff0055; }
+        .btn-especial:hover:not(:disabled) { background: #ff0055; color: #fff; }
 
         /* Consola de Logs Flotante */
         #logPanel {
@@ -79,9 +82,10 @@
             </div>
             <button class="btn-p1" id="p1Abajo">⬇️ Abajo</button>
             <hr style="border-color: #333; width:100%;">
-            <button class="btn-p1" onclick="accionP1('atacar')">⚔️ Atacar</button>
-            <button class="btn-p1" onclick="accionP1('curar')">✨ Curación</button>
-            <button class="btn-p1" onclick="accionP1('escudo')">🛡️ Escudo</button>
+            <button class="btn-p1" id="btnP1Atacar" onclick="accionP1('atacar')">⚔️ Atacar</button>
+            <button class="btn-especial" id="btnP1Especial" onclick="accionP1('especial')" disabled>✨ Especial (F)</button>
+            <button class="btn-p1" id="btnP1Curar" onclick="accionP1('curar')">🧪 Curación</button>
+            <button class="btn-p1" id="btnP1Escudo" onclick="accionP1('escudo')">🛡️ Escudo</button>
         </div>
 
         <!-- Canvas Central -->
@@ -97,9 +101,10 @@
             </div>
             <button class="btn-p2" id="p2Abajo">⬇️ Abajo</button>
             <hr style="border-color: #333; width:100%;">
-            <button class="btn-p2" onclick="accionP2('atacar')">⚔️ Atacar</button>
-            <button class="btn-p2" onclick="accionP2('curar')">✨ Curación</button>
-            <button class="btn-p2" onclick="accionP2('escudo')">🛡️ Escudo</button>
+            <button class="btn-p2" id="btnP2Atacar" onclick="accionP2('atacar')">⚔️ Atacar</button>
+            <button class="btn-especial" id="btnP2Especial" onclick="accionP2('especial')" disabled>✨ Especial (L)</button>
+            <button class="btn-p2" id="btnP2Curar" onclick="accionP2('curar')">🧪 Curación</button>
+            <button class="btn-p2" id="btnP2Escudo" onclick="accionP2('escudo')">🛡️ Escudo</button>
         </div>
     </div>
 
